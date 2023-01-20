@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.learningSpring.Security.Entity.User;
 import com.learningSpring.Security.Entity.VerificationToken;
 import com.learningSpring.Security.Events.RegistrationCompletedEvent;
+import com.learningSpring.Security.Model.ResetPassWordModel;
 import com.learningSpring.Security.Model.UserModel;
 import com.learningSpring.Security.Repository.UserRepo;
 import com.learningSpring.Security.Services.UserService;
@@ -60,6 +61,7 @@ public class RegistrationController {
                 httpServletRequest.getContextPath();
 
     }
+    //resending regiseterverification token
     @GetMapping("/resendVerificationtoken")
     public String resendVerificationToken(@RequestParam("oldToken") String oldToken, HttpServletRequest httpServletRequest){
         String token=userService.resendVerificationToken(oldToken);
@@ -72,8 +74,26 @@ public class RegistrationController {
         String token = userService.createVerificationtoken(userName);
         String url=makeApplicationUrl(httpServletRequest)+"/verifyRegistration?token="+token;
         log.info("verify your registration :"+url);
-        return "Another mail have been sent";
+        return "mail has been sent for verification";
 
+
+    }
+    // reset password
+    @PostMapping("/verifyPassWordResting")
+    public String resetPassWord(@RequestParam("token") String token,@RequestBody ResetPassWordModel resetPassWordModel){
+       String result = userService.resetPassWord(token,resetPassWordModel);
+        return result;
+    }
+    //sending verification token to reset password
+    @PostMapping("/resetPassWordWithUserName")
+    public String resetPassWordVerification(@RequestParam("userName") String userName, HttpServletRequest httpServletRequest){
+        String token = userService.createPassWordRestToken(userName);
+        if(token==null){
+            return "Invalid user";
+        }
+        String url=makeApplicationUrl(httpServletRequest)+"/verifyPassWordResting?token="+token;
+        log.info("Verify your password resettng :"+url);
+        return "mail has been sent for verification";
 
     }
 }

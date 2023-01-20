@@ -10,9 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.learningSpring.Security.Entity.PassWordRestVerificationToken;
 import com.learningSpring.Security.Entity.User;
 import com.learningSpring.Security.Entity.VerificationToken;
+import com.learningSpring.Security.Model.ResetPassWordModel;
 import com.learningSpring.Security.Model.UserModel;
+import com.learningSpring.Security.Repository.PassWordResetVerificationRepo;
 import com.learningSpring.Security.Repository.UserRepo;
 import com.learningSpring.Security.Repository.VerificationTokenRepo;
 
@@ -23,6 +26,8 @@ public class UserService {
     private UserRepo userRepo;
     @Autowired
     private VerificationTokenRepo verificationTokenRepo;
+    @Autowired
+    private PassWordResetVerificationRepo passWordResetVerificationRepo;
     //@Autowired
     //private ModelMapper modelMapper;
     @Autowired
@@ -97,6 +102,40 @@ public class UserService {
         VerificationToken verificationToken=new VerificationToken(user,token);
         verificationTokenRepo.save(verificationToken);
         return token;
+    }
+
+    public String createPassWordRestToken(String userName) {
+        User resetUser=null;
+        PassWordRestVerificationToken pwvt=null;
+        for(User user:userRepo.findAll()){
+            if(user.getUserName().equals(userName)){
+                resetUser=user;
+                break;
+            }
+        }
+        if(resetUser!=null){
+            pwvt=new PassWordRestVerificationToken(resetUser);
+            passWordResetVerificationRepo.save(pwvt);
+            return pwvt.getPassWordRestVerificationTokenName();
+        }
+
+        return null;
+    }
+
+    public String resetPassWord(String token, ResetPassWordModel resetPassWordModel) {
+        User user=null;
+        for(PassWordRestVerificationToken i: passWordResetVerificationRepo.findAll()){
+            if(i.getPassWordRestVerificationTokenName().equals(token)){
+                user=i.getUser();
+                user.setPassword(passwordEncoder.encode(resetPassWordModel.getNewPassWord()));
+                userRepo.save(user);
+                return "password has been changed";
+            }
+        }
+    
+
+        
+        return "invalid token";
     }
 
     
